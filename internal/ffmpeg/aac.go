@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Zlib
+// Copyright 2025, Terry M. Poulin.
 package ffmpeg
 
 import "audio_converter/internal/options"
