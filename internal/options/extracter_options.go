@@ -27,6 +27,7 @@ func NewExtracterOptions(args []string) *ExtracterOptions {
 
 	prog := path.Base(args[0])
 	fs := flag.NewFlagSet(prog, flag.ContinueOnError)
+	fs.BoolVar(&PrintVersion, "version", false, "Print version and exit")
 	fs.StringVar(&opts.Scale, "s", "", "Scale image to `SCALE`. Format is HEIGHTxWIDTH. E.g., \"500x500\"")
 	fs.BoolVar(&opts.NoClobber, "n", false, "Set the no clobber flag: don't overwrite files.")
 	fs.BoolVar(&opts.Overwrite, "y", false, "Overwrite files without prompting.")
@@ -44,6 +45,11 @@ func NewExtracterOptions(args []string) *ExtracterOptions {
 	if opts.Err = fs.Parse(args[1:]); opts.Err != nil {
 		// Usage gets called automatically by the Parse after printing the
 		// error, or if the error is flag.ErrHelp.
+		return nil
+	}
+
+	if PrintVersion {
+		fmt.Printf("%s version %s\n", fs.Name(), Version)
 		return nil
 	}
 

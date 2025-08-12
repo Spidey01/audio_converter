@@ -125,6 +125,12 @@ func testRoots(t *testing.T) {
 
 func TestOptions(t *testing.T) {
 	t.Run("roots", testRoots)
+	t.Run("version", func(t *testing.T) {
+		// Ensure it returns nil, so callers exit.
+		if opts := NewOptions([]string{"--version"}); opts != nil {
+			t.Errorf("--version returned a valid structure")
+		}
+	})
 	t.Run("verbose", func(t *testing.T) {
 		testBoolFlag(t, "v")
 	})

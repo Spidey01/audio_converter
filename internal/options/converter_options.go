@@ -49,6 +49,7 @@ func NewConverterOptions(args []string, defaults ConverterOptions) *ConverterOpt
 		opts.fs.PrintDefaults()
 	}
 
+	fs.BoolVar(&PrintVersion, "version", false, "Print version and exit")
 	fs.BoolVar(&opts.Verbose, "v", false, "Display verbose output.")
 	fs.BoolVar(&opts.NoClobber, "n", false, "Set the no clobber flag: don't overwrite files.")
 	fs.BoolVar(&opts.Overwrite, "y", false, "Overwrite files without prompting. (default: prompt)")
@@ -75,6 +76,11 @@ func NewConverterOptions(args []string, defaults ConverterOptions) *ConverterOpt
 		opts.Channels = 2
 	} else if opts.mono {
 		opts.Channels = 1
+	}
+
+	if PrintVersion {
+		fmt.Printf("%s version %s\n", fs.Name(), Version)
+		return nil
 	}
 
 	if opts.Err = opts.parseFiles(); opts.Err != nil {

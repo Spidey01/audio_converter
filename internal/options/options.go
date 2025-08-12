@@ -28,6 +28,7 @@ func NewOptions(args []string) *Options {
 	prog := path.Base(args[0])
 	fs := flag.NewFlagSet(prog, flag.ContinueOnError)
 
+	fs.BoolVar(&PrintVersion, "version", false, "Print version and exit")
 	fs.BoolVar(&opts.Verbose, "v", false, "Display verbose output.")
 	fs.BoolVar(&opts.NoClobber, "n", false, "Set the no clobber flag: don't overwrite files.")
 	fs.BoolVar(&opts.CopyUnknown, "C", true, "Copy unknown files, like album art and booklets. (default)")
@@ -44,6 +45,11 @@ func NewOptions(args []string) *Options {
 	if opts.Err = fs.Parse(args[1:]); opts.Err != nil {
 		// Usage gets called automatically by the Parse after printing the
 		// error, or if the error is flag.ErrHelp.
+		return nil
+	}
+
+	if PrintVersion {
+		fmt.Printf("%s version %s\n", fs.Name(), Version)
 		return nil
 	}
 
