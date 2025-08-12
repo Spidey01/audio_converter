@@ -7,7 +7,7 @@ is required; refer to go.mod for a compatible version.
 ## Build process
 
 Just another go project. A Makefile is provided to easily run go install and go
-test. By default, binaries are built in ./bin and installed to
+test. By default, binaries are built in ./build and installed to
 PREFIX=/usr/local, respecting DESTDIR.
 
 ```sh
