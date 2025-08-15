@@ -17,12 +17,12 @@ import (
 
 type Exporter struct {
 	ctx     context.Context
-	opts    *options.Options
+	opts    *options.ExporterOptions
 	InRoot  filesystem.FS
 	OutRoot filesystem.FS
 }
 
-func newExporter(ctx context.Context, opts *options.Options) *Exporter {
+func newExporter(ctx context.Context, opts *options.ExporterOptions) *Exporter {
 	return &Exporter{
 		ctx:     ctx,
 		opts:    opts,

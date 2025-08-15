@@ -12,7 +12,7 @@ import (
 	"os/signal"
 )
 
-var opts *options.Options
+var opts *options.ExporterOptions
 var InRoot filesystem.FS
 var OutRoot filesystem.FS
 
@@ -20,7 +20,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer cancel()
 
-	if opts = options.NewOptions(os.Args); opts == nil {
+	if opts = options.NewExporterOptions(os.Args); opts == nil {
 		// Arg parsing error. Usage, etc is handled by the constructor.
 		os.Exit(1)
 	}

@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-type Options struct {
+type ExporterOptions struct {
 	InRoot      string
 	OutRoot     string
 	Format      string
@@ -22,8 +22,8 @@ type Options struct {
 	Verbose     bool
 }
 
-func NewOptions(args []string) *Options {
-	var opts Options
+func NewExporterOptions(args []string) *ExporterOptions {
+	var opts ExporterOptions
 
 	prog := path.Base(args[0])
 	fs := flag.NewFlagSet(prog, flag.ContinueOnError)
@@ -61,7 +61,7 @@ func NewOptions(args []string) *Options {
 	return &opts
 }
 
-func (opts *Options) parseRoots() error {
+func (opts *ExporterOptions) parseRoots() error {
 	opts.InRoot = opts.fs.Arg(0)
 	opts.OutRoot = opts.fs.Arg(1)
 
@@ -82,7 +82,7 @@ func (opts *Options) parseRoots() error {
 	return nil
 }
 
-func (opts *Options) parseFormat(s string) error {
+func (opts *ExporterOptions) parseFormat(s string) error {
 	opts.Format = strings.ToLower(s)
 	switch opts.Format {
 	case "flac", "m4a", "m4r", "mp3":
@@ -92,7 +92,7 @@ func (opts *Options) parseFormat(s string) error {
 	}
 }
 
-func (opts *Options) usage() {
+func (opts *ExporterOptions) usage() {
 	out := func(f string, a ...any) {
 		stream := opts.fs.Output()
 		fmt.Fprintf(stream, f, a...)
