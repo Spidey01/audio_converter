@@ -11,15 +11,16 @@ import (
 )
 
 type ExporterOptions struct {
-	InRoot      string
-	OutRoot     string
-	Format      string
-	LogFile     string
-	fs          *flag.FlagSet
-	Err         error
-	NoClobber   bool
-	CopyUnknown bool
-	Verbose     bool
+	InRoot        string
+	OutRoot       string
+	Format        string
+	LogFile       string
+	fs            *flag.FlagSet
+	Err           error
+	NoClobber     bool
+	CopyUnknown   bool
+	Verbose       bool
+	noCopyUnknown bool
 }
 
 func NewExporterOptions(args []string) *ExporterOptions {
@@ -32,6 +33,7 @@ func NewExporterOptions(args []string) *ExporterOptions {
 	fs.BoolVar(&opts.Verbose, "v", false, "Display verbose output.")
 	fs.BoolVar(&opts.NoClobber, "n", false, "Set the no clobber flag: don't overwrite files.")
 	fs.BoolVar(&opts.CopyUnknown, "C", true, "Copy unknown files, like album art and booklets. (default)")
+	fs.BoolVar(&opts.noCopyUnknown, "N", false, "Do not copy unknown files.")
 	fs.StringVar(&opts.LogFile, "log-file", "", "Log to a file.")
 	fs.Usage = opts.usage
 
@@ -48,6 +50,9 @@ func NewExporterOptions(args []string) *ExporterOptions {
 		return nil
 	}
 
+	if opts.noCopyUnknown {
+		opts.CopyUnknown = false
+	}
 	if PrintVersion {
 		fmt.Printf("%s version %s\n", fs.Name(), Version)
 		return nil
