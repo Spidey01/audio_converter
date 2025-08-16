@@ -136,7 +136,7 @@ func versionTest(t *testing.T, factory factoryFunc) {
 // Handles testing the -v (verbose) flag.
 func verboseTest(t *testing.T, factory factoryFunc) {
 	ft := FlagTest{
-		factory:      extracterOptionsFactory,
+		factory:      factory,
 		name:         "v",
 		defaultValue: "false",
 	}
@@ -147,7 +147,7 @@ func verboseTest(t *testing.T, factory factoryFunc) {
 // Handles testing the no clobber (-n) and overwrite flags (-y)
 func noclobberTest(t *testing.T, factory factoryFunc) {
 	ft := FlagTest{
-		factory:      converterOptionsFactory,
+		factory:      factory,
 		name:         "n",
 		defaultValue: "false",
 	}
