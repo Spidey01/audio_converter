@@ -254,7 +254,7 @@ func rootTest(t *testing.T, factory factoryFunc) {
 
 // For the purposes of unit testing, these are the defaults. They're
 // intentionally not like the actual defaults for various converters.
-var DefaulConverterOptions = ConverterOptions{
+var DefaulConverterOptions = &ConverterOptions{
 	BitRate:          "1024",
 	Codec:            "testcodec",
 	InputExtensions:  []string{},

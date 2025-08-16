@@ -24,19 +24,19 @@ var InputExtensions = []string{
 	".wav",
 }
 
-var DefaultOptions = []options.ConverterOptions{
+var DefaultOptions = []*options.ConverterOptions{
 	FlacOptions,
 	AacOptions,
 	Mp3Options,
 }
 
-func GetDefaultOptions(ext string) options.ConverterOptions {
+func GetDefaultOptions(ext string) *options.ConverterOptions {
 	for _, opts := range DefaultOptions {
 		if slices.Contains(opts.OutputExtensions, ext) {
 			return opts
 		}
 	}
-	return options.ConverterOptions{Err: fmt.Errorf("no defaults for extension %q", ext)}
+	return &options.ConverterOptions{Err: fmt.Errorf("no defaults for extension %q", ext)}
 }
 
 // Returns true if name has one of InputExtensions.
@@ -47,7 +47,7 @@ func IsMediaFile(name string) bool {
 // Implements the main() for various to_<format>. Just provide the default
 // options for the format. Suitable defaults are exposed as package level
 // variables. E.g., FlacOptions.
-func ConvertMain(defaults options.ConverterOptions) {
+func ConvertMain(defaults *options.ConverterOptions) {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer cancel()
 	opts := options.NewConverterOptions(os.Args, defaults)

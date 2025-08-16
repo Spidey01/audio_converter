@@ -120,5 +120,5 @@ func (p *Exporter) Convert(path string) error {
 	copts.OutputFile = filepath.Join(p.opts.OutRoot, path[:len(path)-len(oldExt)]) + newExt
 
 	logging.Verbosef("Converting %q -> %q", copts.InputFile, copts.OutputFile)
-	return ffmpeg.Convert(p.ctx, &copts)
+	return ffmpeg.Convert(p.ctx, copts)
 }

@@ -29,7 +29,7 @@ type ConverterOptions struct {
 	Verbose          bool
 }
 
-func NewConverterOptions(args []string, defaults ConverterOptions) *ConverterOptions {
+func NewConverterOptions(args []string, defaults *ConverterOptions) *ConverterOptions {
 	fs := flag.NewFlagSet(path.Base(args[0]), flag.ContinueOnError)
 	opts := &ConverterOptions{
 		fs:               fs,
