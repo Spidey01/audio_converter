@@ -37,11 +37,11 @@ func NewExporterOptions(args []string) *ExporterOptions {
 	fs.StringVar(&opts.LogFile, "log-file", "", "Log to a file.")
 	fs.Usage = opts.usage
 
-	// Set this so we _actually_ have the default value if -f not provided.
-	opts.Format = "m4a"
-	fs.Func("f", "Set the output extension/format. (default: m4a)", opts.parseFormat)
-	// Set this so the structure is correct for unit tests.
-	fs.Lookup("f").DefValue = opts.Format
+	// Since we can't just look up the flag and set its DefValue, we can't use
+	// Func to bind a parse function to the flag and have working unit tests,
+	// since those expect the DefValue and Value to actually work. So instead,
+	// we need to make this a normal flag and validate after parse.
+	fs.StringVar(&opts.Format, "f", "m4a", "Set the output extension/format.")
 
 	opts.fs = fs
 	if opts.Err = fs.Parse(args[1:]); opts.Err != nil {
@@ -50,6 +50,10 @@ func NewExporterOptions(args []string) *ExporterOptions {
 		return nil
 	}
 
+	if opts.Err = opts.validateFormat(opts.Format); opts.Err != nil {
+		fmt.Fprintln(opts.fs.Output(), opts.Err)
+		return nil
+	}
 	if opts.noCopyUnknown {
 		opts.CopyUnknown = false
 	}
@@ -87,7 +91,7 @@ func (opts *ExporterOptions) parseRoots() error {
 	return nil
 }
 
-func (opts *ExporterOptions) parseFormat(s string) error {
+func (opts *ExporterOptions) validateFormat(s string) error {
 	opts.Format = strings.ToLower(s)
 	switch opts.Format {
 	case "flac", "m4a", "m4r", "mp3":
