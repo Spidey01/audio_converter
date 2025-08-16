@@ -3,7 +3,6 @@
 package options
 
 import (
-	"audio_converter/internal/logging"
 	"flag"
 	"fmt"
 	"io"
@@ -56,16 +55,20 @@ func NewExtracterOptions(args []string) *ExtracterOptions {
 	opts.InputFile = opts.fs.Arg(0)
 	opts.OutputFile = opts.fs.Arg(1)
 	if opts.InputFile == "" {
-		logging.Fatalln("Must specify an {input} file")
+		opts.Err = fmt.Errorf("must specify an {input} file")
 	} else if opts.OutputFile == "" {
-		logging.Fatalln("Must specify an {output} file")
+		opts.Err = fmt.Errorf("must specify an {output} file")
 	} else if opts.InputFile == opts.OutputFile {
-		logging.Fatalf("Cowardly refusing to extract %s to itself", opts.InputFile)
+		opts.Err = fmt.Errorf("cowardly refusing to extract %s to itself", opts.InputFile)
 	} else if matched, err := regexp.MatchString("[[:digit:]]+x[[:digit:]]+", opts.Scale); err != nil {
-		panic(err)
+		opts.Err = err
 	} else if !matched && opts.Scale != "" {
 		io.WriteString(opts.fs.Output(), fmt.Sprintf("Bad scale format: %q\n", opts.Scale))
 		flag.Usage()
+		return nil
+	}
+	if opts.Err != nil {
+		fmt.Fprintln(opts.fs.Output(), opts.Err)
 		return nil
 	}
 
