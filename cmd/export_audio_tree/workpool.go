@@ -65,16 +65,16 @@ func NewWorkPool(parent context.Context, limit int, buffer int) *WorkPool {
 func (p *WorkPool) Start() {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
+	p.init()
+}
 
-	if p.size == 0 {
-		// Restarting queue after a stop. We do this here rather than in stop,
-		// because this makes Add() panic on send to a closed channel if Start
-		// hasn't been called. If we created the new channel before Stop exists,
-		// deadlock could occur by calling Add on a stopped pool until the
-		// channel buffer is full.
-		p.queue = make(chan func(), p.buffer)
+// Peforms initialization of the pool. This must be called while holding
+// p.mutex.
+func (p *WorkPool) init() {
+	if p.size > 0 {
+		panic("init called on running WorkPool!")
 	}
-
+	p.queue = make(chan func(), p.buffer)
 	ncpu := runtime.NumCPU()
 	for i := 0; i < ncpu && i < p.limit; i++ {
 		p.wg.Add(1)
@@ -86,11 +86,14 @@ func (p *WorkPool) Start() {
 // Stop all workers and abort tasks remaining in the queue. This will block
 // until everyone finishes their current item and halts. If the parent context
 // is closed, this occurs automatically. After calling this returns, you must
-// call [Start] before it is possible to add any items to the queue.
+// call [Start] before it is possible to add any more items to the queue.
 func (p *WorkPool) Stop() {
 	// Acquire the mutex to prevent anyone calling Add().
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
+	if p.size == 0 {
+		panic("WorkPool.Stop called when already stopped")
+	}
 
 	// Halt the workers at their next tick.
 	p.cancel()
@@ -109,12 +112,20 @@ func (p *WorkPool) Stop() {
 }
 
 // Drain the queue and halt all workers. This can be used to wait for the
-// completion of queued callbacks without After this returns, you must call
-// [Start] before adding any further items to the queue.
+// completion of currently queued callbacks.
 func (p *WorkPool) Wait() {
 	// Workers will halt once the queue drains.
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
 	close(p.queue)
 	p.wg.Wait()
+	p.size = 0
+	// Restart the queue and initial goroutines. We perform this with a separate
+	// init method, because if we unlocked the mutex in order to call Start():
+	// if Add()->expand() was called asyncronously with Wait(), there would be a
+	// data race where expand could see the queue is stopped (p.size==0) and
+	// when the it exists, depending on which goroutine obtained the lock first.
+	p.init()
 }
 
 // Add a callback to the work queue. If the queue is full, additional goroutines
@@ -129,6 +140,9 @@ func (p *WorkPool) Add(fn func()) {
 func (p *WorkPool) expand() {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
+	if p.size == 0 {
+		panic("WorkPool is not running")
+	}
 	if p.size == p.limit {
 		// Pool can't grow any further.
 		return
