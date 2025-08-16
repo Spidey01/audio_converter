@@ -1,5 +1,9 @@
 # Audio Converter
 
+My tool bag for managing my audio collection.
+
+## Dependencies
+
 This requires a suitable version of ffmpeg to be installed and in path. ffmpeg
 version 7.1.1 was current at time of writing. For compilation, the Go toolchain
 is required; refer to go.mod for a compatible version.
@@ -36,8 +40,8 @@ Additionally, there are tools for more specific purposes.
 
 | Script  | Comment |
 | ------- | ------- |
-| export_audio_tree | Convert a directory tree. Useful for libraries and albums. |
-| extract_coverart | Extracts the cover art with optional scaling and format conversion. |
+| export_audio_tree | Convert a directory tree. Useful for exporting libraries and albums. |
+| extract_coverart  | Extracts the cover art with optional scaling and format conversion. |
 
 
 ### Example of Converting Single Files
