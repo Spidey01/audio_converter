@@ -5,6 +5,7 @@ package options
 import (
 	"context"
 	"flag"
+	"math"
 	"os"
 	"path"
 	"strconv"
@@ -106,6 +107,15 @@ func (test *FlagTest) StringFlag(t *testing.T) {
 			continue
 		}
 	}
+}
+
+// Handles testing a flag taking an int, like "-n number"
+func (test *FlagTest) IntFlag(t *testing.T) {
+	// Technically the only difference is 'and make sure it can be converted to
+	// an integer' which is handled by the flag library presuming the type was
+	// registered as such. So, for now, let's just call this an alias of the
+	// string test.
+	test.StringFlag(t)
 }
 
 // Returns three strings: a program name for argv[0], the current working
@@ -389,6 +399,26 @@ func TestExporterOptions(t *testing.T) {
 	})
 	t.Run("copy unknown", func(t *testing.T) {
 		copyUnknownTest(t, exporterOptionsFactory)
+	})
+	t.Run("max jobs", func(t *testing.T) {
+		ft := FlagTest{
+			factory:      exporterOptionsFactory,
+			name:         "j",
+			goodValues:   []string{"1", "4", "8", "32", strconv.Itoa(math.MaxInt)},
+			badValues:    []string{"nan"},
+			defaultValue: "0",
+		}
+		ft.IntFlag(t)
+	})
+	t.Run("max queue", func(t *testing.T) {
+		ft := FlagTest{
+			factory:      exporterOptionsFactory,
+			name:         "q",
+			goodValues:   []string{"1", "200", "1024", strconv.Itoa(math.MaxInt)},
+			badValues:    []string{"nan"},
+			defaultValue: "0",
+		}
+		ft.IntFlag(t)
 	})
 	t.Run("format", func(t *testing.T) {
 		ft := FlagTest{

@@ -17,6 +17,8 @@ type ExporterOptions struct {
 	LogFile       string
 	fs            *flag.FlagSet
 	Err           error
+	MaxQueue      int
+	MaxJobs       int
 	NoClobber     bool
 	Overwrite     bool
 	CopyUnknown   bool
@@ -37,6 +39,8 @@ func NewExporterOptions(args []string) *ExporterOptions {
 	fs.BoolVar(&opts.CopyUnknown, "C", true, "Copy unknown files, like album art and booklets. (default)")
 	fs.BoolVar(&opts.noCopyUnknown, "N", false, "Do not copy unknown files.")
 	fs.StringVar(&opts.LogFile, "log-file", "", "Log to a file.")
+	fs.IntVar(&opts.MaxQueue, "q", 0, "Sets the maximum queue depth.")
+	fs.IntVar(&opts.MaxJobs, "j", 0, "Sets the maximum number of concurrent jobs.")
 	fs.Usage = opts.usage
 
 	// Since we can't just look up the flag and set its DefValue, we can't use
@@ -115,6 +119,9 @@ func (opts *ExporterOptions) usage() {
 	out("{outdir} retaining the same structure. For example if the %q is like\n", "{inroot}")
 	out("%q then %q will end up with the same structure.\n", "Artists/Album/Song.ext", "{outroot}")
 	out("This is useful for say, exporting a library in a different format.\n")
+	out("\n")
+	out("Copies and conversions are executed concurrently. Defaults are based on CPU core count.\n")
+	out("Set max jobs to lower CPU usage from conversions, the default is one per core.\n")
 	out("\n")
 
 	opts.fs.PrintDefaults()
