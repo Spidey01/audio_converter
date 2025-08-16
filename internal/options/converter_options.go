@@ -64,8 +64,8 @@ func NewConverterOptions(args []string, defaults ConverterOptions) *ConverterOpt
 	}
 	fs.IntVar(&opts.SampleRate, "r", sampleRate, "Sets sample rate.")
 
-	fs.BoolVar(&opts.stereo, "s", defaults.Channels == 2, "Sets 2.0/stereo mode.")
-	fs.BoolVar(&opts.mono, "m", defaults.Channels == 1, "Sets 1.0/mono mode.")
+	fs.BoolVar(&opts.stereo, "s", false, "Sets 2.0/stereo mode.")
+	fs.BoolVar(&opts.mono, "m", false, "Sets 1.0/mono mode.")
 
 	if opts.Err = fs.Parse(args[1:]); opts.Err != nil {
 		// Usage gets called automatically by the Parse after printing the
@@ -76,6 +76,8 @@ func NewConverterOptions(args []string, defaults ConverterOptions) *ConverterOpt
 		opts.Channels = 2
 	} else if opts.mono {
 		opts.Channels = 1
+	} else {
+		opts.Channels = defaults.Channels
 	}
 
 	if PrintVersion {
