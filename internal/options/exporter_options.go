@@ -18,6 +18,7 @@ type ExporterOptions struct {
 	fs            *flag.FlagSet
 	Err           error
 	NoClobber     bool
+	Overwrite     bool
 	CopyUnknown   bool
 	Verbose       bool
 	noCopyUnknown bool
@@ -32,6 +33,7 @@ func NewExporterOptions(args []string) *ExporterOptions {
 	fs.BoolVar(&PrintVersion, "version", false, "Print version and exit")
 	fs.BoolVar(&opts.Verbose, "v", false, "Display verbose output.")
 	fs.BoolVar(&opts.NoClobber, "n", false, "Set the no clobber flag: don't overwrite files.")
+	fs.BoolVar(&opts.Overwrite, "y", false, "Overwrite files without prompting. (default: prompt)")
 	fs.BoolVar(&opts.CopyUnknown, "C", true, "Copy unknown files, like album art and booklets. (default)")
 	fs.BoolVar(&opts.noCopyUnknown, "N", false, "Do not copy unknown files.")
 	fs.StringVar(&opts.LogFile, "log-file", "", "Log to a file.")
