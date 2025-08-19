@@ -362,6 +362,14 @@ func TestExtracterOptions(t *testing.T) {
 	t.Run("verbose", func(t *testing.T) {
 		verboseTest(t, extracterOptionsFactory)
 	})
+	t.Run("codec", func(t *testing.T) {
+		ft := FlagTest{
+			factory:    extracterOptionsFactory,
+			name:       "c",
+			goodValues: []string{"mjpeg", "png", "gif"},
+		}
+		ft.StringFlag(t)
+	})
 	t.Run("scale", func(t *testing.T) {
 		ft := FlagTest{
 			factory:    extracterOptionsFactory,

@@ -24,7 +24,9 @@ func ExtractCoverArt(ctx context.Context, opts *options.ExtracterOptions) error 
 		// Set the necessary options.
 		"-map", "0:v",
 		"-map", "-0:V",
-		"-c", "copy",
+	}
+	if opts.Codec != "" {
+		args = append(args, "-c", opts.Codec)
 	}
 	// Scale if ya got it!
 	if opts.Scale != "" {

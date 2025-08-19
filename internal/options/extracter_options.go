@@ -13,6 +13,7 @@ import (
 type ExtracterOptions struct {
 	InputFile  string
 	OutputFile string
+	Codec      string
 	Scale      string
 	fs         *flag.FlagSet
 	Err        error
@@ -27,6 +28,7 @@ func NewExtracterOptions(args []string) *ExtracterOptions {
 	prog := path.Base(args[0])
 	fs := flag.NewFlagSet(prog, flag.ContinueOnError)
 	fs.BoolVar(&PrintVersion, "version", false, "Print version and exit")
+	fs.StringVar(&opts.Codec, "c", "", "Override the ffmpeg codec rather than based on {output}.")
 	fs.StringVar(&opts.Scale, "s", "", "Scale image to `SCALE`. Format is HEIGHTxWIDTH. E.g., \"500x500\"")
 	fs.BoolVar(&opts.NoClobber, "n", false, "Set the no clobber flag: don't overwrite files.")
 	fs.BoolVar(&opts.Overwrite, "y", false, "Overwrite files without prompting.")
@@ -35,7 +37,7 @@ func NewExtracterOptions(args []string) *ExtracterOptions {
 		out := opts.fs.Output()
 		io.WriteString(out, fmt.Sprintf("%s [options] {input} {output}\n", opts.fs.Name()))
 		io.WriteString(out, "\nExtracts cover art from {input} into {output} using ffmpeg.\n")
-		io.WriteString(out, "The format is detected based on the file extension of {output}.\n")
+		io.WriteString(out, "The format is detected based on the file extension of {output} unless the codec is specified.\n")
 		io.WriteString(out, "For best compatibility, consider scaling to 500x500 as a jpg.\n\n")
 		opts.fs.PrintDefaults()
 	}
