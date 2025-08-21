@@ -49,8 +49,8 @@ func TestMakeCmd(t *testing.T) {
 		assert(t, "-ac", strconv.Itoa(i), &options.ConverterOptions{Channels: i})
 		assert(t, "-ar", strconv.Itoa(i), &options.ConverterOptions{SampleRate: i})
 	}
-	assert(t, "-y", "", &options.ConverterOptions{NoClobber: false, Overwrite: true})
-	assert(t, "-n", "", &options.ConverterOptions{NoClobber: true, Overwrite: false})
+	assert(t, "-y", "", &options.ConverterOptions{GlobalOptions: options.GlobalOptions{NoClobber: false, Overwrite: true}})
+	assert(t, "-n", "", &options.ConverterOptions{GlobalOptions: options.GlobalOptions{NoClobber: true, Overwrite: false}})
 }
 
 func TestGetDefaultOptions(t *testing.T) {

@@ -3,17 +3,13 @@
 package options
 
 import (
-	"flag"
 	"fmt"
 	"io"
-	"path"
 	"strings"
 )
 
 type ConverterOptions struct {
-	fs               *flag.FlagSet
-	Err              error
-	LogFile          string
+	GlobalOptions
 	InputFile        string
 	OutputFile       string
 	BitRate          string
@@ -26,18 +22,15 @@ type ConverterOptions struct {
 	SampleRate       int
 	stereo           bool
 	mono             bool
-	NoClobber        bool
-	Overwrite        bool
-	Verbose          bool
 }
 
 func NewConverterOptions(args []string, defaults *ConverterOptions) *ConverterOptions {
-	fs := flag.NewFlagSet(path.Base(args[0]), flag.ContinueOnError)
 	opts := &ConverterOptions{
-		fs:               fs,
 		InputExtensions:  defaults.InputExtensions,
 		OutputExtensions: defaults.OutputExtensions,
 	}
+	defer opts.onError()
+	fs := AddGlobalOptions(args, &opts.GlobalOptions)
 	fs.Usage = func() {
 		out := opts.fs.Output()
 		io.WriteString(out, fmt.Sprintf("%s [options] {input} {output}\n", opts.fs.Name()))
@@ -51,30 +44,19 @@ func NewConverterOptions(args []string, defaults *ConverterOptions) *ConverterOp
 		opts.fs.PrintDefaults()
 	}
 
-	fs.BoolVar(&PrintVersion, "version", false, "Print version and exit")
-	fs.BoolVar(&opts.Verbose, "v", false, "Display verbose output.")
-	fs.BoolVar(&opts.NoClobber, "n", false, "Set the no clobber flag: don't overwrite files.")
-	fs.BoolVar(&opts.Overwrite, "y", false, "Overwrite files without prompting. (default: prompt)")
-	fs.StringVar(&opts.LogFile, "log-file", "", "Log to a file.")
-
 	fs.StringVar(&opts.BitRate, "b", defaults.BitRate, "Sets the output bitrate.")
 	fs.StringVar(&opts.Codec, "c", defaults.Codec, "Sets the ffmpeg codec.")
-
 	sampleRate := 44100
 	if defaults.SampleRate > 0 {
 		sampleRate = defaults.SampleRate
 	}
 	fs.IntVar(&opts.SampleRate, "r", sampleRate, "Sets sample rate.")
-
 	fs.BoolVar(&opts.stereo, "s", false, "Sets 2.0/stereo mode.")
 	fs.BoolVar(&opts.mono, "m", false, "Sets 1.0/mono mode.")
-
 	fs.StringVar(&opts.CoverArtFormat, "cover", "copy", "Sets whether cover art is copied or converted to `FMT`.\nValues may be mjpeg, png, or copy.")
 	fs.StringVar(&opts.Scale, "scale", "", "When converting cover art, scale it to `SCALE`. Format is HEIGHTxWIDTH. E.g., \"500x500\"\nNote: only takes affect when -cover is not set to copy")
 
-	if opts.Err = fs.Parse(args[1:]); opts.Err != nil {
-		// Usage gets called automatically by the Parse after printing the
-		// error, or if the error is flag.ErrHelp.
+	if opts.Err = opts.parse(args[1:]); opts.Err != nil {
 		return nil
 	}
 	if opts.stereo {
@@ -85,19 +67,9 @@ func NewConverterOptions(args []string, defaults *ConverterOptions) *ConverterOp
 		opts.Channels = defaults.Channels
 	}
 	if opts.Err = ValidateHeightWidth(opts.Scale); opts.Err != nil {
-		fmt.Fprintln(opts.fs.Output(), opts.Err)
-		opts.fs.Usage()
 		return nil
 	}
-
-	if PrintVersion {
-		fmt.Printf("%s version %s\n", fs.Name(), Version)
-		return nil
-	}
-
 	if opts.Err = opts.parseFiles(); opts.Err != nil {
-		fmt.Fprintln(opts.fs.Output(), opts.Err)
-		opts.fs.Usage()
 		return nil
 	}
 
@@ -115,6 +87,9 @@ func (opts *ConverterOptions) parseFiles() error {
 	} else if opts.InputFile == opts.OutputFile {
 		return fmt.Errorf("cowardly refusing to convert %q into itself", opts.InputFile)
 	}
+
+	// opts.MetadataFile is optional. The most we could do is stat, but since we
+	// don't stat opts.InputFile, there is no point.
 
 	return nil
 }

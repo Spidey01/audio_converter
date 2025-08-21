@@ -36,7 +36,9 @@ func GetDefaultOptions(ext string) *options.ConverterOptions {
 			return opts
 		}
 	}
-	return &options.ConverterOptions{Err: fmt.Errorf("no defaults for extension %q", ext)}
+	opts := &options.ConverterOptions{}
+	opts.Err = fmt.Errorf("no defaults for extension %q", ext)
+	return opts
 }
 
 // Returns true if name has one of InputExtensions.

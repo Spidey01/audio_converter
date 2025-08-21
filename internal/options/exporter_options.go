@@ -3,42 +3,29 @@
 package options
 
 import (
-	"flag"
 	"fmt"
 	"os"
-	"path"
 	"strings"
 )
 
 type ExporterOptions struct {
+	GlobalOptions
 	InRoot        string
 	OutRoot       string
 	Format        string
-	LogFile       string
-	fs            *flag.FlagSet
-	Err           error
 	MaxQueue      int
 	MaxJobs       int
-	NoClobber     bool
-	Overwrite     bool
 	CopyUnknown   bool
-	Verbose       bool
 	noCopyUnknown bool
 }
 
 func NewExporterOptions(args []string) *ExporterOptions {
 	var opts ExporterOptions
+	fs := AddGlobalOptions(args, &opts.GlobalOptions)
+	defer opts.onError() // handle printing if opts.Err != nil
 
-	prog := path.Base(args[0])
-	fs := flag.NewFlagSet(prog, flag.ContinueOnError)
-
-	fs.BoolVar(&PrintVersion, "version", false, "Print version and exit")
-	fs.BoolVar(&opts.Verbose, "v", false, "Display verbose output.")
-	fs.BoolVar(&opts.NoClobber, "n", false, "Set the no clobber flag: don't overwrite files.")
-	fs.BoolVar(&opts.Overwrite, "y", false, "Overwrite files without prompting. (default: prompt)")
 	fs.BoolVar(&opts.CopyUnknown, "C", true, "Copy unknown files, like album art and booklets. (default)")
 	fs.BoolVar(&opts.noCopyUnknown, "N", false, "Do not copy unknown files.")
-	fs.StringVar(&opts.LogFile, "log-file", "", "Log to a file.")
 	fs.IntVar(&opts.MaxQueue, "q", 0, "Sets the maximum queue depth.")
 	fs.IntVar(&opts.MaxJobs, "j", 0, "Sets the maximum number of concurrent jobs.")
 	fs.Usage = opts.usage
@@ -50,26 +37,18 @@ func NewExporterOptions(args []string) *ExporterOptions {
 	fs.StringVar(&opts.Format, "f", "m4a", "Set the output extension/format.")
 
 	opts.fs = fs
-	if opts.Err = fs.Parse(args[1:]); opts.Err != nil {
-		// Usage gets called automatically by the Parse after printing the
-		// error, or if the error is flag.ErrHelp.
+	if opts.Err = opts.parse(args[1:]); opts.Err != nil {
 		return nil
 	}
 
 	if opts.Err = opts.validateFormat(opts.Format); opts.Err != nil {
-		fmt.Fprintln(opts.fs.Output(), opts.Err)
 		return nil
 	}
 	if opts.noCopyUnknown {
 		opts.CopyUnknown = false
 	}
-	if PrintVersion {
-		fmt.Printf("%s version %s\n", fs.Name(), Version)
-		return nil
-	}
 
 	if opts.Err = opts.parseRoots(); opts.Err != nil {
-		fmt.Fprintln(opts.fs.Output(), opts.Err)
 		return nil
 	}
 

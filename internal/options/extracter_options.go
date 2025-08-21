@@ -3,37 +3,28 @@
 package options
 
 import (
-	"flag"
 	"fmt"
 	"io"
-	"path"
 	"regexp"
 )
 
 type ExtracterOptions struct {
+	GlobalOptions
 	InputFile  string
 	OutputFile string
 	Codec      string
 	Scale      string
-	fs         *flag.FlagSet
-	Err        error
-	NoClobber  bool
-	Overwrite  bool
-	Verbose    bool
 }
 
 func NewExtracterOptions(args []string) *ExtracterOptions {
 	var opts ExtracterOptions
 
-	prog := path.Base(args[0])
-	fs := flag.NewFlagSet(prog, flag.ContinueOnError)
-	fs.BoolVar(&PrintVersion, "version", false, "Print version and exit")
+	fs := AddGlobalOptions(args, &opts.GlobalOptions)
+	defer opts.onError() // handle printing if opts.Err != nil
+
 	fs.StringVar(&opts.Codec, "c", "", "Override the ffmpeg codec rather than based on {output}.")
 	fs.StringVar(&opts.Scale, "s", "", "Alias for -scale `SCALE`")
 	fs.StringVar(&opts.Scale, "scale", "", "Scale image to `SCALE`. Format is HEIGHTxWIDTH. E.g., \"500x500\"")
-	fs.BoolVar(&opts.NoClobber, "n", false, "Set the no clobber flag: don't overwrite files.")
-	fs.BoolVar(&opts.Overwrite, "y", false, "Overwrite files without prompting.")
-	fs.BoolVar(&opts.Verbose, "v", false, "Set verbose mode.")
 	fs.Usage = func() {
 		out := opts.fs.Output()
 		io.WriteString(out, fmt.Sprintf("%s [options] {input} {output}\n", opts.fs.Name()))
@@ -43,15 +34,7 @@ func NewExtracterOptions(args []string) *ExtracterOptions {
 		opts.fs.PrintDefaults()
 	}
 
-	opts.fs = fs
-	if opts.Err = fs.Parse(args[1:]); opts.Err != nil {
-		// Usage gets called automatically by the Parse after printing the
-		// error, or if the error is flag.ErrHelp.
-		return nil
-	}
-
-	if PrintVersion {
-		fmt.Printf("%s version %s\n", fs.Name(), Version)
+	if opts.Err = opts.parse(args[1:]); opts.Err != nil {
 		return nil
 	}
 
@@ -67,8 +50,6 @@ func NewExtracterOptions(args []string) *ExtracterOptions {
 		opts.Err = err
 	}
 	if opts.Err != nil {
-		fmt.Fprintln(opts.fs.Output(), opts.Err)
-		opts.fs.Usage()
 		return nil
 	}
 
