@@ -38,6 +38,10 @@ func TestMakeCmd(t *testing.T) {
 	for _, value := range []string{"128k", "256k", "320k", "foo", "bar"} {
 		assert(t, "-c:a", value, &options.ConverterOptions{Codec: value})
 		assert(t, "-b:a", value, &options.ConverterOptions{BitRate: value})
+		// While the value of these flags matter, it's left to FFmpeg to decide
+		// if they're good or bad, so no need for a separate test.
+		assert(t, "-c:v", value, &options.ConverterOptions{CoverArtFormat: value})
+		assert(t, "-s", value, &options.ConverterOptions{Scale: value})
 		assert(t, "-i", value, &options.ConverterOptions{InputFile: value})
 		assert(t, "", value, &options.ConverterOptions{OutputFile: value})
 	}
