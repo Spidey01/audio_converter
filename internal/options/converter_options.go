@@ -69,27 +69,11 @@ func NewConverterOptions(args []string, defaults *ConverterOptions) *ConverterOp
 	if opts.Err = ValidateHeightWidth(opts.Scale); opts.Err != nil {
 		return nil
 	}
-	if opts.Err = opts.parseFiles(); opts.Err != nil {
+	opts.InputFile = opts.fs.Arg(0)
+	opts.OutputFile = opts.fs.Arg(1)
+	if opts.Err = ValidateFileArgs(opts.InputFile, opts.OutputFile); opts.Err != nil {
 		return nil
 	}
 
 	return opts
-}
-
-func (opts *ConverterOptions) parseFiles() error {
-	opts.InputFile = opts.fs.Arg(0)
-	opts.OutputFile = opts.fs.Arg(1)
-
-	if opts.InputFile == "" {
-		return fmt.Errorf("must specify input directory")
-	} else if opts.OutputFile == "" {
-		return fmt.Errorf("must specify output directory")
-	} else if opts.InputFile == opts.OutputFile {
-		return fmt.Errorf("cowardly refusing to convert %q into itself", opts.InputFile)
-	}
-
-	// opts.MetadataFile is optional. The most we could do is stat, but since we
-	// don't stat opts.InputFile, there is no point.
-
-	return nil
 }

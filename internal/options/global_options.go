@@ -57,3 +57,14 @@ func (opts *GlobalOptions) onError() {
 		opts.fs.Usage()
 	}
 }
+
+func ValidateFileArgs(input string, output string) error {
+	if input == "" {
+		return fmt.Errorf("must specify input file")
+	} else if output == "" {
+		return fmt.Errorf("must specify output file")
+	} else if input == output {
+		return fmt.Errorf("cowardly refusing to output the input %q to itself", input)
+	}
+	return nil
+}

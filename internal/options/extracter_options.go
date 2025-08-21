@@ -40,16 +40,10 @@ func NewExtracterOptions(args []string) *ExtracterOptions {
 
 	opts.InputFile = opts.fs.Arg(0)
 	opts.OutputFile = opts.fs.Arg(1)
-	if opts.InputFile == "" {
-		opts.Err = fmt.Errorf("must specify an {input} file")
-	} else if opts.OutputFile == "" {
-		opts.Err = fmt.Errorf("must specify an {output} file")
-	} else if opts.InputFile == opts.OutputFile {
-		opts.Err = fmt.Errorf("cowardly refusing to extract %s to itself", opts.InputFile)
-	} else if err := ValidateHeightWidth(opts.Scale); err != nil {
-		opts.Err = err
+	if opts.Err = ValidateFileArgs(opts.InputFile, opts.OutputFile); opts.Err != nil {
+		return nil
 	}
-	if opts.Err != nil {
+	if opts.Err = ValidateHeightWidth(opts.Scale); opts.Err != nil {
 		return nil
 	}
 
