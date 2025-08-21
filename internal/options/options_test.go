@@ -349,6 +349,15 @@ func TestConverterOptions(t *testing.T) {
 		}
 		ft.StringFlag(t)
 	})
+	t.Run("scale", func(t *testing.T) {
+		ft := FlagTest{
+			factory:    converterOptionsFactory,
+			name:       "scale",
+			goodValues: []string{"500x500", "1x1", "4096x4096"},
+			badValues:  []string{"500xWidth", "Heightx500", "HxW"},
+		}
+		ft.StringFlag(t)
+	})
 	t.Run("input and output file", func(t *testing.T) {
 		inputOutputFileTest(t, converterOptionsFactory)
 	})

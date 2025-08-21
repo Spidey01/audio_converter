@@ -19,6 +19,7 @@ type ConverterOptions struct {
 	BitRate          string
 	Codec            string
 	CoverArtFormat   string
+	Scale            string
 	InputExtensions  []string
 	OutputExtensions []string
 	Channels         int
@@ -67,7 +68,9 @@ func NewConverterOptions(args []string, defaults *ConverterOptions) *ConverterOp
 
 	fs.BoolVar(&opts.stereo, "s", false, "Sets 2.0/stereo mode.")
 	fs.BoolVar(&opts.mono, "m", false, "Sets 1.0/mono mode.")
+
 	fs.StringVar(&opts.CoverArtFormat, "cover", "copy", "Sets whether cover art is copied or converted to `FMT`.\nValues may be mjpeg, png, or copy.")
+	fs.StringVar(&opts.Scale, "scale", "", "When converting cover art, scale it to `SCALE`. Format is HEIGHTxWIDTH. E.g., \"500x500\"\nNote: only takes affect when -cover is not set to copy")
 
 	if opts.Err = fs.Parse(args[1:]); opts.Err != nil {
 		// Usage gets called automatically by the Parse after printing the
@@ -81,6 +84,11 @@ func NewConverterOptions(args []string, defaults *ConverterOptions) *ConverterOp
 	} else {
 		opts.Channels = defaults.Channels
 	}
+	if opts.Err = ValidateHeightWidth(opts.Scale); opts.Err != nil {
+		fmt.Fprintln(opts.fs.Output(), opts.Err)
+		opts.fs.Usage()
+		return nil
+	}
 
 	if PrintVersion {
 		fmt.Printf("%s version %s\n", fs.Name(), Version)
@@ -89,6 +97,7 @@ func NewConverterOptions(args []string, defaults *ConverterOptions) *ConverterOp
 
 	if opts.Err = opts.parseFiles(); opts.Err != nil {
 		fmt.Fprintln(opts.fs.Output(), opts.Err)
+		opts.fs.Usage()
 		return nil
 	}
 

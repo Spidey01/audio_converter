@@ -71,6 +71,12 @@ func makeCmd(ctx context.Context, opts *options.ConverterOptions) *exec.Cmd {
 		"-c:v", opts.CoverArtFormat,
 	}
 
+	// Scale the cover art. Note, FFmpeg ignores scale when copying rather than
+	// converting video streams, cover art included.
+	if opts.Scale != "" {
+		args = append(args, "-s", opts.Scale)
+	}
+
 	if opts.NoClobber {
 		args = append(args, "-n")
 	} else if opts.Overwrite {
