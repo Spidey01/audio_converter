@@ -68,7 +68,7 @@ func makeCmd(ctx context.Context, opts *options.ConverterOptions) *exec.Cmd {
 		// Wrangle the metadata.
 		"-map_metadata", "0",
 		// Copy the cover art if it exists.
-		"-c:v", "copy",
+		"-c:v", opts.CoverArtFormat,
 	}
 
 	if opts.NoClobber {

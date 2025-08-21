@@ -339,6 +339,16 @@ func TestConverterOptions(t *testing.T) {
 			t.Errorf("Failed on -m for mono: opts.Channels: %d", opts.Channels)
 		}
 	})
+	t.Run("cover art", func(t *testing.T) {
+		ft := FlagTest{
+			factory:      converterOptionsFactory,
+			name:         "cover",
+			goodValues:   []string{"mjpeg", "png"},
+			defaultValue: "copy",
+			// Bad values are left to FFmpeg to decide.
+		}
+		ft.StringFlag(t)
+	})
 	t.Run("input and output file", func(t *testing.T) {
 		inputOutputFileTest(t, converterOptionsFactory)
 	})
