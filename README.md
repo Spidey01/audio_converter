@@ -43,7 +43,6 @@ Additionally, there are tools for more specific purposes.
 | export_audio_tree | Convert a directory tree. Useful for exporting libraries and albums. |
 | extract_coverart  | Extracts the cover art with optional scaling and format conversion. |
 
-
 ### Example of Converting Single Files
 
 ```sh
