@@ -22,6 +22,7 @@ var InputExtensions = []string{
 	".m4a", ".m4r",
 	".mp3",
 	".wav",
+	".aiff",
 }
 
 var DefaultOptions = []*options.ConverterOptions{
