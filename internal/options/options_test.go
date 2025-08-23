@@ -3,6 +3,7 @@
 package options
 
 import (
+	"audio_converter/internal/filesystem"
 	"context"
 	"flag"
 	"math"
@@ -448,6 +449,15 @@ func TestExporterOptions(t *testing.T) {
 			goodValues:   []string{"flac", "m4a", "m4r", "mp3"},
 			badValues:    []string{"unknown"},
 			defaultValue: "m4a",
+		}
+		ft.StringFlag(t)
+	})
+	t.Run("cleanpaths", func(t *testing.T) {
+		ft := FlagTest{
+			factory:    exporterOptionsFactory,
+			name:       "cleanpaths",
+			goodValues: []string{"_", "foo", " - ", "x"},
+			badValues:  filesystem.ReservedCharacters,
 		}
 		ft.StringFlag(t)
 	})

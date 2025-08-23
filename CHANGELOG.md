@@ -14,6 +14,10 @@ exporter. Additionally, the individual exporters now have flags to convert and
 scale cover art. The behavior of options across programs and how they are tested
 has been further normalized.
 
+It is now possible to sanitize paths. For example, a path might be "song
+name?!.ext", which is fine unless you are exporting to a filesystem that
+reserves `?`. Using `-cleanpaths _` such characters get replaced with `_`.
+
 Also, there is now a change log :).
 
 ### Changed
@@ -28,6 +32,8 @@ Also, there is now a change log :).
 - to_aac, to_flac, to_mp3
   - Added `-cover` flag to specify how to convert cover art. Default is "copy" to maintain original behavior.
   - Added `-scale` flag to specify size of cover art, when `-cover` specifies a conversion.
+- export_audio_tree
+  - Added `-cleanpaths` flag to translate reserved characters in the output file names.
 
 ### Fixed
 

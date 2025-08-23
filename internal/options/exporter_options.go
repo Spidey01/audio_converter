@@ -3,6 +3,7 @@
 package options
 
 import (
+	"audio_converter/internal/filesystem"
 	"fmt"
 	"os"
 	"strings"
@@ -13,6 +14,7 @@ type ExporterOptions struct {
 	InRoot        string
 	OutRoot       string
 	Format        string
+	CleanPaths    string
 	MaxQueue      int
 	MaxJobs       int
 	CopyUnknown   bool
@@ -52,6 +54,13 @@ func (opts *ExporterOptions) AddOptions(args []string) {
 	// since those expect the DefValue and Value to actually work. So instead,
 	// we need to make this a normal flag and validate after parse.
 	fs.StringVar(&opts.Format, "f", "m4a", "Set the output extension/format.")
+
+	cleanPathsHelp := strings.Join([]string{
+		"Replace reserved characters with `TEXT` when creating output file names.",
+		"Useful when files will be shared with a different operating system.",
+		"The underscore ('_') makes a good replacement text.",
+	}, "\n")
+	fs.StringVar(&opts.CleanPaths, "cleanpaths", "", cleanPathsHelp)
 }
 
 func (opts *ExporterOptions) Parse(args []string) error {
@@ -73,6 +82,13 @@ func (opts *ExporterOptions) Validate() error {
 	case "flac", "m4a", "m4r", "mp3":
 	default:
 		return fmt.Errorf("unsupported format: %q", opts.Format)
+	}
+	for _, c := range opts.CleanPaths {
+		for _, s := range filesystem.ReservedCharacters {
+			if strings.ContainsRune(s, c) {
+				return fmt.Errorf("cannot include reserved character %c in -cleanpaths value", c)
+			}
+		}
 	}
 
 	// Since we embed ConverterOptions, we need to consider its validations that

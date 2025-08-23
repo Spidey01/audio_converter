@@ -22,6 +22,7 @@ type Exporter struct {
 	pool    *WorkPool
 	InRoot  filesystem.FS
 	OutRoot filesystem.FS
+	cleaner *filesystem.Cleaner
 }
 
 func newExporter(ctx context.Context, opts *options.ExporterOptions) *Exporter {
@@ -31,6 +32,7 @@ func newExporter(ctx context.Context, opts *options.ExporterOptions) *Exporter {
 		pool:    NewWorkPool(ctx, opts.MaxJobs, opts.MaxQueue),
 		InRoot:  filesystem.NewFileSystem(opts.InRoot),
 		OutRoot: filesystem.NewFileSystem(opts.OutRoot),
+		cleaner: filesystem.NewCleaner(opts.CleanPaths, filesystem.ReservedCharacters),
 	}
 }
 
@@ -145,17 +147,18 @@ func (p *Exporter) visitFile(path string, d fs.DirEntry, err error) error {
 // Handle copying path between roots. If no clobber is set, we silently ignore
 // the operation when it looks like the file exists.
 func (p *Exporter) Copy(path string) error {
+	opath := p.cleaner.CleanPath(path)
 	if p.opts.NoClobber {
-		if _, err := p.OutRoot.Stat(path); !errors.Is(err, os.ErrNotExist) {
-			logging.Verbosef("Not clobbering %q", path)
+		if _, err := p.OutRoot.Stat(opath); !errors.Is(err, os.ErrNotExist) {
+			logging.Verbosef("Not clobbering %q", opath)
 			return nil
 		}
 	}
 	logging.Verbosef("Copying %q to %q",
 		filepath.Join(p.opts.InRoot, path),
-		filepath.Join(p.opts.OutRoot, path))
-	nb, err := filesystem.CopyFile(p.InRoot, path, p.OutRoot, path)
-	logging.Printf("Copied %d bytes of %s", nb, path)
+		filepath.Join(p.opts.OutRoot, opath))
+	nb, err := filesystem.CopyFile(p.InRoot, path, p.OutRoot, opath)
+	logging.Printf("Copied %d bytes of %s", nb, opath)
 	return err
 }
 
@@ -174,7 +177,7 @@ func (p *Exporter) Convert(path string) (string, error) {
 		return "", copts.Err
 	}
 	copts.InputFile = filepath.Join(p.opts.InRoot, path)
-	copts.OutputFile = filepath.Join(p.opts.OutRoot, path[:len(path)-len(oldExt)]) + newExt
+	copts.OutputFile = filepath.Join(p.opts.OutRoot, p.cleaner.CleanPath(path[:len(path)-len(oldExt)])) + newExt
 
 	logging.Verbosef("Converting %q -> %q", copts.InputFile, copts.OutputFile)
 	output, err := ffmpeg.ConvertInBackground(p.ctx, &copts)

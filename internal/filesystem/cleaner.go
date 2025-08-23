@@ -3,6 +3,7 @@
 package filesystem
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -50,9 +51,12 @@ type Cleaner struct {
 // `reserved` with `replacement` text when encountered during a clean.
 func NewCleaner(replacement string, reserved []string) *Cleaner {
 	var r []string
-	for _, s := range reserved {
-		r = append(r, s, replacement)
+	if replacement != "" {
+		for _, s := range reserved {
+			r = append(r, s, replacement)
+		}
 	}
+	fmt.Println("replacement: ", replacement)
 	return &Cleaner{Replacer: strings.NewReplacer(r...)}
 }
 
