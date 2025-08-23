@@ -11,8 +11,8 @@ import (
 // This should be something like '<module version>-<date time>-<short
 // commit>[+dirty]'.  E.g., vN.N.N-YYYYMMDDHHMMSS-XXXXXXXXXXXX, depending on the
 // module directive in go.mod, the clock at compile time, and the current commit
-// situation.
-var Version string
+// situation. If updating this in init fails, it will be "unknown".
+var Version string = "unknown"
 
 // Used by the various option parsers to indicate --version / print it and exit.
 var PrintVersion bool
@@ -22,10 +22,10 @@ var PrintVersion bool
 // conditional compilation based on the shell. It's less flexible, but also 90%
 // of what I want anyway.
 func init() {
-	info, err := buildinfo.ReadFile(os.Args[0])
-	if err != nil {
+	if prog, err := os.Executable(); err != nil {
+		fmt.Fprintf(os.Stderr, "os.Executable: err: %v", err)
+	} else if info, err := buildinfo.ReadFile(prog); err != nil {
 		fmt.Fprintf(os.Stderr, "buildinfo.ReadFile: err: %v", err)
-		Version = "unknown"
 	} else {
 		Version = info.Main.Version
 	}
