@@ -9,7 +9,7 @@ import (
 )
 
 type ExporterOptions struct {
-	GlobalOptions
+	ConverterOptions
 	InRoot        string
 	OutRoot       string
 	Format        string
@@ -20,44 +20,58 @@ type ExporterOptions struct {
 }
 
 func NewExporterOptions(args []string) *ExporterOptions {
-	var opts ExporterOptions
-	fs := AddGlobalOptions(args, &opts.GlobalOptions)
+	opts := &ExporterOptions{}
+	opts.AddOptions(args)
 	defer opts.onError() // handle printing if opts.Err != nil
+
+	if opts.Err = opts.Parse(args[1:]); opts.Err != nil {
+		return nil
+	}
+	if opts.Err = opts.Validate(); opts.Err != nil {
+		return nil
+	}
+	return opts
+}
+
+func (opts *ExporterOptions) AddOptions(args []string) {
+	// fs := AddGlobalOptions(args, &opts.GlobalOptions)
+	opts.ConverterOptions.AddOptions(args, &ConverterOptions{})
+	// So, this would work ^, but takes us back to the injecting defaults issue.
+	fs := opts.fs
 
 	fs.BoolVar(&opts.CopyUnknown, "C", true, "Copy unknown files, like album art and booklets. (default)")
 	fs.BoolVar(&opts.noCopyUnknown, "N", false, "Do not copy unknown files.")
 	fs.IntVar(&opts.MaxQueue, "q", 0, "Sets the maximum queue depth.")
 	fs.IntVar(&opts.MaxJobs, "j", 0, "Sets the maximum number of concurrent jobs.")
-	fs.Usage = opts.usage
+	fs.Usage = opts.Usage
 
 	// Since we can't just look up the flag and set its DefValue, we can't use
 	// Func to bind a parse function to the flag and have working unit tests,
 	// since those expect the DefValue and Value to actually work. So instead,
 	// we need to make this a normal flag and validate after parse.
 	fs.StringVar(&opts.Format, "f", "m4a", "Set the output extension/format.")
+}
 
-	opts.fs = fs
-	if opts.Err = opts.parse(args[1:]); opts.Err != nil {
-		return nil
-	}
-
-	if opts.Err = opts.validateFormat(opts.Format); opts.Err != nil {
+func (opts *ExporterOptions) Parse(args []string) error {
+	if opts.Err = opts.parse(args); opts.Err != nil {
 		return nil
 	}
 	if opts.noCopyUnknown {
 		opts.CopyUnknown = false
 	}
-
-	if opts.Err = opts.parseRoots(); opts.Err != nil {
-		return nil
-	}
-
-	return &opts
-}
-
-func (opts *ExporterOptions) parseRoots() error {
 	opts.InRoot = opts.fs.Arg(0)
 	opts.OutRoot = opts.fs.Arg(1)
+
+	return nil
+}
+
+func (opts *ExporterOptions) Validate() error {
+	opts.Format = strings.ToLower(opts.Format)
+	switch opts.Format {
+	case "flac", "m4a", "m4r", "mp3":
+	default:
+		return fmt.Errorf("unsupported format: %q", opts.Format)
+	}
 
 	if opts.InRoot == "" {
 		return fmt.Errorf("must specify input directory")
@@ -76,32 +90,17 @@ func (opts *ExporterOptions) parseRoots() error {
 	return nil
 }
 
-func (opts *ExporterOptions) validateFormat(s string) error {
-	opts.Format = strings.ToLower(s)
-	switch opts.Format {
-	case "flac", "m4a", "m4r", "mp3":
-		return nil
-	default:
-		return fmt.Errorf("unsupported format: %q", s)
-	}
-}
+func (opts *ExporterOptions) Usage() {
+	opts.printf("usage: %s [options] {indir} {outdir}\n\n", opts.fs.Name())
 
-func (opts *ExporterOptions) usage() {
-	out := func(f string, a ...any) {
-		stream := opts.fs.Output()
-		fmt.Fprintf(stream, f, a...)
-	}
-
-	out("usage: %s [options] {indir} {outdir}\n\n", opts.fs.Name())
-
-	out("Given a tree of source files %q, export them to the output folder\n", "{inroot}")
-	out("{outdir} retaining the same structure. For example if the %q is like\n", "{inroot}")
-	out("%q then %q will end up with the same structure.\n", "Artists/Album/Song.ext", "{outroot}")
-	out("This is useful for say, exporting a library in a different format.\n")
-	out("\n")
-	out("Copies and conversions are executed concurrently. Defaults are based on CPU core count.\n")
-	out("Set max jobs to lower CPU usage from conversions, the default is one per core.\n")
-	out("\n")
+	opts.printf("Given a tree of source files %q, export them to the output folder\n", "{inroot}")
+	opts.printf("{outdir} retaining the same structure. For example if the %q is like\n", "{inroot}")
+	opts.printf("%q then %q will end up with the same structure.\n", "Artists/Album/Song.ext", "{outroot}")
+	opts.printf("This is useful for say, exporting a library in a different format.\n")
+	opts.printf("\n")
+	opts.printf("Copies and conversions are executed concurrently. Defaults are based on CPU core count.\n")
+	opts.printf("Set max jobs to lower CPU usage from conversions, the default is one per core.\n")
+	opts.printf("\n")
 
 	opts.fs.PrintDefaults()
 }

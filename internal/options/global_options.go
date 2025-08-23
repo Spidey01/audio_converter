@@ -36,6 +36,9 @@ func AddGlobalOptions(args []string, opts *GlobalOptions) *flag.FlagSet {
 // should exit (e.g., because of --version). Generally, the error should be
 // printed via a deferred onError() and nil returned from a constructor.
 func (opts *GlobalOptions) parse(args []string) error {
+	if opts.fs == nil {
+		panic("No flag set")
+	}
 	// Usage gets called automatically by the opts.fs.Parse after printing the
 	// error, or if the error is flag.ErrHelp.
 	err := opts.fs.Parse(args)
@@ -45,6 +48,14 @@ func (opts *GlobalOptions) parse(args []string) error {
 	}
 
 	return err
+}
+
+func (opts *GlobalOptions) printf(format string, a ...any) {
+	fmt.Fprintf(opts.fs.Output(), format, a...)
+}
+
+func (opts *GlobalOptions) println(a ...any) {
+	fmt.Fprintln(opts.fs.Output(), a...)
 }
 
 // Prints opts.Err if it is not nil, followed by usage. You can just defer this

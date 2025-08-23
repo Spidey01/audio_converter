@@ -4,7 +4,6 @@ package options
 
 import (
 	"fmt"
-	"io"
 	"regexp"
 )
 
@@ -17,37 +16,51 @@ type ExtracterOptions struct {
 }
 
 func NewExtracterOptions(args []string) *ExtracterOptions {
-	var opts ExtracterOptions
-
-	fs := AddGlobalOptions(args, &opts.GlobalOptions)
+	opts := &ExtracterOptions{}
+	opts.AddOptions(args)
 	defer opts.onError() // handle printing if opts.Err != nil
+	if opts.Err = opts.Parse(args[1:]); opts.Err != nil {
+		return nil
+	}
+	if opts.Err = opts.Validate(); opts.Err != nil {
+		return nil
+	}
+	return opts
+}
 
+func (opts *ExtracterOptions) Usage() {
+	opts.printf("%s [options] {input} {output}\n", opts.fs.Name())
+	opts.printf("\nExtracts cover art from {input} into {output} using ffmpeg.\n")
+	opts.printf("The format is detected based on the file extension of {output} unless the codec is specified.\n")
+	opts.printf("For best compatibility, consider scaling to 500x500 as a jpg.\n\n")
+	opts.fs.PrintDefaults()
+}
+
+func (opts *ExtracterOptions) AddOptions(args []string) {
+	fs := AddGlobalOptions(args, &opts.GlobalOptions)
 	fs.StringVar(&opts.Codec, "c", "", "Override the ffmpeg codec rather than based on {output}.")
 	fs.StringVar(&opts.Scale, "s", "", "Alias for -scale `SCALE`")
 	fs.StringVar(&opts.Scale, "scale", "", "Scale image to `SCALE`. Format is HEIGHTxWIDTH. E.g., \"500x500\"")
-	fs.Usage = func() {
-		out := opts.fs.Output()
-		io.WriteString(out, fmt.Sprintf("%s [options] {input} {output}\n", opts.fs.Name()))
-		io.WriteString(out, "\nExtracts cover art from {input} into {output} using ffmpeg.\n")
-		io.WriteString(out, "The format is detected based on the file extension of {output} unless the codec is specified.\n")
-		io.WriteString(out, "For best compatibility, consider scaling to 500x500 as a jpg.\n\n")
-		opts.fs.PrintDefaults()
-	}
+	fs.Usage = opts.Usage
+}
 
-	if opts.Err = opts.parse(args[1:]); opts.Err != nil {
+func (opts *ExtracterOptions) Parse(args []string) error {
+	if opts.Err = opts.parse(args); opts.Err != nil {
 		return nil
 	}
-
 	opts.InputFile = opts.fs.Arg(0)
 	opts.OutputFile = opts.fs.Arg(1)
-	if opts.Err = ValidateFileArgs(opts.InputFile, opts.OutputFile); opts.Err != nil {
-		return nil
-	}
-	if opts.Err = ValidateHeightWidth(opts.Scale); opts.Err != nil {
-		return nil
-	}
+	return nil
+}
 
-	return &opts
+func (opts *ExtracterOptions) Validate() error {
+	if err := ValidateFileArgs(opts.InputFile, opts.OutputFile); err != nil {
+		return err
+	}
+	if err := ValidateHeightWidth(opts.Scale); err != nil {
+		return err
+	}
+	return nil
 }
 
 func ValidateHeightWidth(value string) error {
