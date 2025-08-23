@@ -168,7 +168,8 @@ func (p *Exporter) Convert(path string) (string, error) {
 		return "", p.Copy(path)
 	}
 
-	copts := ffmpeg.GetDefaultOptions(newExt)
+	// A shallow copy is sufficent for our purposes. We just need to update the input/output fields.
+	copts := p.opts.ConverterOptions
 	if copts.Err != nil {
 		return "", copts.Err
 	}
@@ -176,7 +177,7 @@ func (p *Exporter) Convert(path string) (string, error) {
 	copts.OutputFile = filepath.Join(p.opts.OutRoot, path[:len(path)-len(oldExt)]) + newExt
 
 	logging.Verbosef("Converting %q -> %q", copts.InputFile, copts.OutputFile)
-	output, err := ffmpeg.ConvertInBackground(p.ctx, copts)
+	output, err := ffmpeg.ConvertInBackground(p.ctx, &copts)
 	if err != nil {
 		if output == nil {
 			output = []byte{}
