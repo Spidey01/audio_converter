@@ -48,17 +48,20 @@ func (opts *ConverterOptions) AddOptions(args []string, defs *ConverterOptions) 
 	fs.StringVar(&opts.BitRate, "b", defs.BitRate, "Sets the output bitrate.")
 	fs.StringVar(&opts.Codec, "c", defs.Codec, "Sets the ffmpeg codec.")
 
-	sampleRate := 44100
 	if defs.SampleRate > 0 {
-		sampleRate = defs.SampleRate
+		opts.SampleRate = defs.SampleRate
+	} else if opts.SampleRate == 0 {
+		opts.SampleRate = 44100
 	}
-	fs.IntVar(&opts.SampleRate, "r", sampleRate, "Sets sample rate.")
+	fs.IntVar(&opts.SampleRate, "r", opts.SampleRate, "Sets sample rate.")
 	fs.BoolVar(&opts.stereo, "s", defs.stereo, "Sets 2.0/stereo mode.")
 	fs.BoolVar(&opts.mono, "m", defs.mono, "Sets 1.0/mono mode.")
 
-	// FIXME.
-	fs.StringVar(&opts.CoverArtFormat, "cover", "copy", "Sets whether cover art is copied or converted to `FMT`.\nValues may be mjpeg, png, or copy.")
-	fs.StringVar(&opts.Scale, "scale", "", "When converting cover art, scale it to `SCALE`. Format is HEIGHTxWIDTH. E.g., \"500x500\"\nNote: only takes affect when -cover is not set to copy")
+	if defs.CoverArtFormat == "" && opts.CoverArtFormat == "" {
+		opts.CoverArtFormat = "copy"
+	}
+	fs.StringVar(&opts.CoverArtFormat, "cover", opts.CoverArtFormat, "Sets whether cover art is copied or converted to `FMT`.\nValues may be mjpeg, png, or copy.")
+	fs.StringVar(&opts.Scale, "scale", defs.Scale, "When converting cover art, scale it to `SCALE`. Format is HEIGHTxWIDTH. E.g., \"500x500\"\nNote: only takes affect when -cover is not set to copy")
 }
 
 func (opts *ConverterOptions) Parse(args []string) error {
@@ -99,6 +102,8 @@ func (opts *ConverterOptions) Usage() {
 
 // Merges options from `source` into the current options structure. Any fields
 // that are zero initialized are ignored.
+//
+// Note, this performs a shallow copy. That's suitable for our purposes, but not great.
 func (opts *ConverterOptions) Merge(source *ConverterOptions) {
 	// Since they're pointers, ValueOf(...).Elem() should never crash.
 	self := reflect.ValueOf(opts).Elem()
@@ -114,12 +119,18 @@ func (opts *ConverterOptions) Merge(source *ConverterOptions) {
 	for i := range other.NumField() {
 		s := self.Field(i)
 		o := other.Field(i)
+
 		// These should never fail, but let's be pendantic.
 		if !o.IsValid() || o.IsZero() {
 			continue
 		}
-		if s.IsZero() && s.CanSet() {
-			s.Set(o)
+		// Skip already initialized.
+		if !s.IsZero() {
+			continue
 		}
+		if !s.CanSet() {
+			panic("ConverterOptions.Merge: can't set destination field")
+		}
+		s.Set(o)
 	}
 }

@@ -32,7 +32,7 @@ func AddGlobalOptions(args []string, opts *GlobalOptions) *flag.FlagSet {
 	return opts.fs
 }
 
-// Calls opts.fs.Parse, returning an error if that fails, or the application
+// Calls opts.fs.Parse, returning an error if that fails, or if the application
 // should exit (e.g., because of --version). Generally, the error should be
 // printed via a deferred onError() and nil returned from a constructor.
 func (opts *GlobalOptions) parse(args []string) error {

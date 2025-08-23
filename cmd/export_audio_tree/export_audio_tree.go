@@ -21,7 +21,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer cancel()
 
-	if opts = options.NewExporterOptions(os.Args); opts == nil {
+	if opts = options.NewExporterOptions(os.Args, nil); opts == nil {
 		// Arg parsing error. Usage, etc is handled by the constructor.
 		os.Exit(1)
 	}

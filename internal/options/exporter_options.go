@@ -19,8 +19,11 @@ type ExporterOptions struct {
 	noCopyUnknown bool
 }
 
-func NewExporterOptions(args []string) *ExporterOptions {
+func NewExporterOptions(args []string, defs *ConverterOptions) *ExporterOptions {
 	opts := &ExporterOptions{}
+	if defs != nil {
+		opts.Merge(defs)
+	}
 	opts.AddOptions(args)
 	defer opts.onError() // handle printing if opts.Err != nil
 
@@ -34,8 +37,7 @@ func NewExporterOptions(args []string) *ExporterOptions {
 }
 
 func (opts *ExporterOptions) AddOptions(args []string) {
-	// fs := AddGlobalOptions(args, &opts.GlobalOptions)
-	opts.ConverterOptions.AddOptions(args, &ConverterOptions{})
+	opts.ConverterOptions.AddOptions(args, &opts.ConverterOptions)
 	// So, this would work ^, but takes us back to the injecting defaults issue.
 	fs := opts.fs
 
@@ -71,6 +73,17 @@ func (opts *ExporterOptions) Validate() error {
 	case "flac", "m4a", "m4r", "mp3":
 	default:
 		return fmt.Errorf("unsupported format: %q", opts.Format)
+	}
+
+	// Since we embed ConverterOptions, we need to consider its validations that
+	// apply to us. Basically, all of them but the input/output fields.
+	if opts.stereo {
+		opts.Channels = 2
+	} else if opts.mono {
+		opts.Channels = 1
+	}
+	if err := ValidateHeightWidth(opts.Scale); err != nil {
+		return err
 	}
 
 	if opts.InRoot == "" {

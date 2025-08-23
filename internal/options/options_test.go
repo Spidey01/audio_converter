@@ -134,48 +134,6 @@ func setup(t *testing.T) (string, string, string) {
 	return "go test", inroot, outroot
 }
 
-// Handles testing the --version flag.
-func versionTest(t *testing.T, factory factoryFunc) {
-	prog, input, output := setup(t)
-	opts := factory([]string{prog, "-version", input, output})
-	if opts != nil {
-		t.Errorf("Failed with --version")
-	}
-}
-
-// Handles testing the -v (verbose) flag.
-func verboseTest(t *testing.T, factory factoryFunc) {
-	ft := FlagTest{
-		factory:      factory,
-		name:         "v",
-		defaultValue: "false",
-	}
-	ft.BoolFlag(t)
-
-}
-
-// Handles testing the no clobber (-n) and overwrite flags (-y)
-func noclobberTest(t *testing.T, factory factoryFunc) {
-	ft := FlagTest{
-		factory:      factory,
-		name:         "n",
-		defaultValue: "false",
-	}
-	ft.BoolFlag(t)
-	ft.name = "y"
-	ft.BoolFlag(t)
-}
-
-// Handles testing the --log-file option.
-func logFileTest(t *testing.T, factory factoryFunc) {
-	test := FlagTest{
-		factory:    factory,
-		name:       "log-file",
-		goodValues: []string{"-", "/dev/stdin", "somefile", "/ham/spam"},
-	}
-	test.StringFlag(t)
-}
-
 // Handles testing that -C or -N control the copy unknown flag.
 func copyUnknownTest(t *testing.T, factory factoryFunc) {
 	prog, input, output := setup(t)
@@ -262,6 +220,99 @@ func rootTest(t *testing.T, factory factoryFunc) {
 	}
 }
 
+// Adds tests for global options using t.Run() and the provided factory.
+func testGlobalOptions(t *testing.T, factory factoryFunc) {
+	// Handles testing the --log-file option.
+	t.Run("log file", func(t *testing.T) {
+		test := FlagTest{
+			factory:    factory,
+			name:       "log-file",
+			goodValues: []string{"-", "/dev/stdin", "somefile", "/ham/spam"},
+		}
+		test.StringFlag(t)
+	})
+	// Handles testing the no clobber (-n) and overwrite flags (-y)
+	t.Run("noclobber and overwrite", func(t *testing.T) {
+		ft := FlagTest{
+			factory:      factory,
+			name:         "n",
+			defaultValue: "false",
+		}
+		ft.BoolFlag(t)
+		ft.name = "y"
+		ft.BoolFlag(t)
+	})
+	// Handles testing the --version flag.
+	t.Run("version", func(t *testing.T) {
+		prog, input, output := setup(t)
+		opts := factory([]string{prog, "-version", input, output})
+		if opts != nil {
+			t.Errorf("Failed with --version")
+		}
+	})
+	// Handles testing the -v (verbose) flag.
+	t.Run("verbose", func(t *testing.T) {
+		ft := FlagTest{
+			factory:      factory,
+			name:         "v",
+			defaultValue: "false",
+		}
+		ft.BoolFlag(t)
+	})
+}
+
+// Adds tests for converter options using t.Run() and the provided factory.
+func testConverterOptions(t *testing.T, factory factoryFunc) {
+	t.Run("bitrate", func(t *testing.T) {
+		test := FlagTest{
+			factory:      factory,
+			name:         "b",
+			goodValues:   []string{"12345", "128", "256", "320"},
+			defaultValue: DefaulConverterOptions.BitRate,
+		}
+		test.StringFlag(t)
+	})
+	t.Run("codec", func(t *testing.T) {
+		test := FlagTest{
+			factory:      factory,
+			name:         "c",
+			goodValues:   []string{"some_codec"},
+			badValues:    []string{},
+			defaultValue: DefaulConverterOptions.Codec,
+		}
+		test.StringFlag(t)
+	})
+	t.Run("samplerate", func(t *testing.T) {
+		test := FlagTest{
+			factory:      factory,
+			name:         "r",
+			goodValues:   []string{"44100", "48000", "12345"},
+			badValues:    []string{"notnumeric", "3.14"},
+			defaultValue: strconv.Itoa(DefaulConverterOptions.SampleRate),
+		}
+		test.StringFlag(t)
+	})
+	t.Run("cover art", func(t *testing.T) {
+		ft := FlagTest{
+			factory:      factory,
+			name:         "cover",
+			goodValues:   []string{"mjpeg", "png"},
+			defaultValue: "copy",
+			// Bad values are left to FFmpeg to decide.
+		}
+		ft.StringFlag(t)
+	})
+	t.Run("scale", func(t *testing.T) { // fails on bad values for exporter opts
+		ft := FlagTest{
+			factory:    factory,
+			name:       "scale",
+			goodValues: []string{"500x500", "1x1", "4096x4096"},
+			badValues:  []string{"500xWidth", "Heightx500", "HxW"},
+		}
+		ft.StringFlag(t)
+	})
+}
+
 // For the purposes of unit testing, these are the defaults. They're
 // intentionally not like the actual defaults for various converters.
 var DefaulConverterOptions = &ConverterOptions{
@@ -283,47 +334,10 @@ func converterOptionsFactory(args []string) *flag.FlagSet {
 
 // Test cases for ConverterOptions used by various tools, like to_aac.
 func TestConverterOptions(t *testing.T) {
-	t.Run("bitrate", func(t *testing.T) {
-		test := FlagTest{
-			factory:      converterOptionsFactory,
-			name:         "b",
-			goodValues:   []string{"12345", "128", "256", "320"},
-			defaultValue: DefaulConverterOptions.BitRate,
-		}
-		test.StringFlag(t)
-	})
-	t.Run("codec", func(t *testing.T) {
-		test := FlagTest{
-			factory:      converterOptionsFactory,
-			name:         "c",
-			goodValues:   []string{"some_codec"},
-			badValues:    []string{},
-			defaultValue: DefaulConverterOptions.Codec,
-		}
-		test.StringFlag(t)
-	})
-	t.Run("log file", func(t *testing.T) {
-		logFileTest(t, converterOptionsFactory)
-	})
-	t.Run("noclobber and overwrite", func(t *testing.T) {
-		noclobberTest(t, converterOptionsFactory)
-	})
-	t.Run("samplerate", func(t *testing.T) {
-		test := FlagTest{
-			factory:      converterOptionsFactory,
-			name:         "r",
-			goodValues:   []string{"44100", "48000", "12345"},
-			badValues:    []string{"notnumeric", "3.14"},
-			defaultValue: strconv.Itoa(DefaulConverterOptions.SampleRate),
-		}
-		test.StringFlag(t)
-	})
-	t.Run("verbose", func(t *testing.T) {
-		verboseTest(t, converterOptionsFactory)
-	})
-	t.Run("version", func(t *testing.T) {
-		versionTest(t, converterOptionsFactory)
-	})
+	testGlobalOptions(t, converterOptionsFactory)
+	testConverterOptions(t, converterOptionsFactory)
+	// These flags are used to set an actual field from private values. So it's
+	// only meaningful to test them on the actual structure.
 	t.Run("stereo and mono", func(t *testing.T) {
 		prog, input, output := setup(t)
 		opts := NewConverterOptions([]string{prog, input, output}, DefaulConverterOptions)
@@ -339,25 +353,6 @@ func TestConverterOptions(t *testing.T) {
 			t.Errorf("Failed on -m for mono: opts.Channels: %d", opts.Channels)
 		}
 	})
-	t.Run("cover art", func(t *testing.T) {
-		ft := FlagTest{
-			factory:      converterOptionsFactory,
-			name:         "cover",
-			goodValues:   []string{"mjpeg", "png"},
-			defaultValue: "copy",
-			// Bad values are left to FFmpeg to decide.
-		}
-		ft.StringFlag(t)
-	})
-	t.Run("scale", func(t *testing.T) {
-		ft := FlagTest{
-			factory:    converterOptionsFactory,
-			name:       "scale",
-			goodValues: []string{"500x500", "1x1", "4096x4096"},
-			badValues:  []string{"500xWidth", "Heightx500", "HxW"},
-		}
-		ft.StringFlag(t)
-	})
 	t.Run("input and output file", func(t *testing.T) {
 		inputOutputFileTest(t, converterOptionsFactory)
 	})
@@ -372,15 +367,7 @@ func extracterOptionsFactory(args []string) *flag.FlagSet {
 }
 
 func TestExtracterOptions(t *testing.T) {
-	t.Run("version", func(t *testing.T) {
-		versionTest(t, extracterOptionsFactory)
-	})
-	t.Run("noclobber and overwrite", func(t *testing.T) {
-		noclobberTest(t, extracterOptionsFactory)
-	})
-	t.Run("verbose", func(t *testing.T) {
-		verboseTest(t, extracterOptionsFactory)
-	})
+	testGlobalOptions(t, extracterOptionsFactory)
 	t.Run("codec", func(t *testing.T) {
 		ft := FlagTest{
 			factory:    extracterOptionsFactory,
@@ -392,7 +379,7 @@ func TestExtracterOptions(t *testing.T) {
 	t.Run("scale", func(t *testing.T) {
 		ft := FlagTest{
 			factory:    extracterOptionsFactory,
-			name:       "s",
+			name:       "scale",
 			goodValues: []string{"500x500", "1x1", "4096x4096"},
 			badValues:  []string{"500xWidth", "Heightx500", "HxW"},
 		}
@@ -404,7 +391,7 @@ func TestExtracterOptions(t *testing.T) {
 }
 
 func exporterOptionsFactory(args []string) *flag.FlagSet {
-	opts := NewExporterOptions(args)
+	opts := NewExporterOptions(args, DefaulConverterOptions)
 	if opts != nil {
 		return opts.fs
 	}
@@ -412,17 +399,24 @@ func exporterOptionsFactory(args []string) *flag.FlagSet {
 }
 
 func TestExporterOptions(t *testing.T) {
-	t.Run("version", func(t *testing.T) {
-		versionTest(t, exporterOptionsFactory)
-	})
-	t.Run("log file", func(t *testing.T) {
-		logFileTest(t, exporterOptionsFactory)
-	})
-	t.Run("noclobber and overwrite", func(t *testing.T) {
-		noclobberTest(t, exporterOptionsFactory)
-	})
-	t.Run("verbose", func(t *testing.T) {
-		verboseTest(t, exporterOptionsFactory)
+	testGlobalOptions(t, exporterOptionsFactory)
+	testConverterOptions(t, exporterOptionsFactory)
+	// These flags are used to set an actual field from private values. So it's
+	// only meaningful to test them on the actual structure.
+	t.Run("stereo and mono", func(t *testing.T) {
+		prog, input, output := setup(t)
+		opts := NewExporterOptions([]string{prog, input, output}, DefaulConverterOptions)
+		if opts.Channels != DefaulConverterOptions.Channels {
+			t.Errorf("Failed on default channel config")
+		}
+		opts = NewExporterOptions([]string{prog, "-s", input, output}, DefaulConverterOptions)
+		if opts.Channels != 2 {
+			t.Errorf("Failed on -s for stereo: opts.Channels: %d", opts.Channels)
+		}
+		opts = NewExporterOptions([]string{prog, "-m", input, output}, DefaulConverterOptions)
+		if opts.Channels != 1 {
+			t.Errorf("Failed on -m for mono: opts.Channels: %d", opts.Channels)
+		}
 	})
 	t.Run("copy unknown", func(t *testing.T) {
 		copyUnknownTest(t, exporterOptionsFactory)
