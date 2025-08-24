@@ -3,7 +3,6 @@
 package filesystem
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -56,7 +55,6 @@ func NewCleaner(replacement string, reserved []string) *Cleaner {
 			r = append(r, s, replacement)
 		}
 	}
-	fmt.Println("replacement: ", replacement)
 	return &Cleaner{Replacer: strings.NewReplacer(r...)}
 }
 
