@@ -56,6 +56,7 @@ about 30-40 minutes down to about 5-10 minutes with the default settings.
 - export_audio_tree
   - Added `-y` flag to overwrite files instead of prompting.
   - Added `-q` and `-j` flags to control the work pool.
+- Added AIFF and Ogg Vorbis as recognized input file types.
 
 ### Fixed
 

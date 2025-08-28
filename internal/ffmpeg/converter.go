@@ -23,6 +23,7 @@ var InputExtensions = []string{
 	".mp3",
 	".wav",
 	".aiff",
+	".ogg", "oga"
 }
 
 var DefaultOptions = []*options.ConverterOptions{
