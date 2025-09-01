@@ -34,6 +34,7 @@ Also, there is now a change log :).
   - Added `-scale` flag to specify size of cover art, when `-cover` specifies a conversion.
 - export_audio_tree
   - Added `-cleanpaths` flag to translate reserved characters in the output file names.
+  - Now detects AIFF, Ogg Vorbis (OGG/OGA)), and ATRAC (AEA/OMA) files as convertable input.
 
 ### Fixed
 
