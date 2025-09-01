@@ -23,7 +23,8 @@ var InputExtensions = []string{
 	".mp3",
 	".wav",
 	".aiff",
-	".ogg", "oga"
+	".ogg", "oga",
+	".aea", ".oma", // Not all ffmpeg can parse Sony ATRAC formats.
 }
 
 var DefaultOptions = []*options.ConverterOptions{
