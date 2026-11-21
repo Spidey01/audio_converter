@@ -98,8 +98,9 @@ func (p *Exporter) visitDir(path string, d fs.DirEntry, err error) error {
 	if err != nil {
 		return fmt.Errorf("stat failed: %w", err)
 	}
-	logging.Printf("Mkdirs %q", path)
-	return p.OutRoot.MkDirAll(path, st.Mode().Perm())
+	opath := p.cleaner.CleanPath(path)
+	logging.Printf("Mkdirs %q", opath)
+	return p.OutRoot.MkDirAll(opath, st.Mode().Perm())
 }
 
 // Walk function for converting files.
